@@ -6,6 +6,11 @@
 ghcr.io/dev-longshun/new-api:latest
 ```
 
+镜像由 GitHub Actions 自动构建并推送到 GHCR：
+
+- push `main` 分支 → 构建 `beta` 标签
+- 打 `v*` tag（如 `v0.1.0`）→ 构建 `latest` 标签
+
 ## 部署步骤
 
 ### 1. 创建项目
@@ -16,30 +21,28 @@ ghcr.io/dev-longshun/new-api:latest
 
 ### 2. 添加 PostgreSQL
 
-Add Service → Marketplace → 搜索 **PostgreSQL** → 一键部署。
+Add Service → **Databases** → 选择 **PostgreSQL** → 一键部署。
 
-部署完成后，在 PostgreSQL 服务的 Instructions 面板中记录以下信息备用：
+部署完成后，在 PostgreSQL 服务的 **Overview** 页面点击 Connection String 旁的眼睛图标查看连接信息，记录备用：
 
-- Host（内网地址）
-- Port（默认 `5432`）
-- Username / Password / Database name
+- Connection String（完整连接串，直接用于 `SQL_DSN`）
 
 ---
 
 ### 3. 添加 Redis
 
-Add Service → Marketplace → 搜索 **Redis** → 一键部署。
+Add Service → **Databases** → 选择 **Redis** → 一键部署。
 
-部署完成后，在 Redis 服务的 Instructions 面板中记录内网连接地址。
+部署完成后，在 Redis 服务的 **Overview** 页面同样可以查看连接地址，记录备用。
 
 ---
 
 ### 4. 部署 new-api
 
-Add Service → Prebuilt Image → 输入上方镜像地址：
+Add Service → **Docker Image** → 输入上方镜像地址：
 
 ```
-calciumion/new-api:latest
+ghcr.io/dev-longshun/new-api:latest
 ```
 
 ---
