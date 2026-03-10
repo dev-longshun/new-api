@@ -130,3 +130,19 @@ For request structs that are parsed from client JSON and then re-marshaled to up
   - field absent in client JSON => `nil` => omitted on marshal;
   - field explicitly set to zero/false => non-`nil` pointer => must still be sent upstream.
 - Avoid using non-pointer scalars with `omitempty` for optional request parameters, because zero values (`0`, `0.0`, `false`) will be silently dropped during marshal.
+
+## Development Protocol Skill
+
+This project additionally includes a cross-agent development protocol skill:
+
+- `.claude/skills/protocol-dev/SKILL.md`
+- `.codex/skills/protocol-dev/SKILL.md`
+- `.cursor/skills/protocol-dev/SKILL.md`
+- `.kiro/steering/protocol-dev.md`
+
+When applicable, follow the `protocol-dev` workflow for:
+
+- Plan first, implement after explicit authorization
+- Commit message generation and approval flow
+- Debug-first process for bug fixing
+- Merge/release procedures and output formatting requirements

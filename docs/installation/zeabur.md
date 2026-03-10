@@ -23,9 +23,11 @@ ghcr.io/dev-longshun/new-api:latest
 
 Add Service → **Databases** → 选择 **PostgreSQL** → 一键部署。
 
-部署完成后，在 PostgreSQL 服务的 **Overview** 页面点击 Connection String 旁的眼睛图标查看连接信息，记录备用：
+部署完成后，在 PostgreSQL 服务的 **Overview** 页面点击 Connection String 旁的眼睛图标查看连接串：
 
-- Connection String（完整连接串，直接用于 `SQL_DSN`）
+```
+postgresql://root:A5P0OUgl6B9xi3s4MawrqcoWQIC728E1@tpe1.clusters.zeabur.com:24791/zeabur
+```
 
 ---
 
@@ -33,7 +35,11 @@ Add Service → **Databases** → 选择 **PostgreSQL** → 一键部署。
 
 Add Service → **Databases** → 选择 **Redis** → 一键部署。
 
-部署完成后，在 Redis 服务的 **Overview** 页面同样可以查看连接地址，记录备用。
+部署完成后，在 Redis 服务的 **Overview** 页面查看连接地址：
+
+```
+redis://:E06dRMwBgmvx3o45nkcpSr1l7Hji98G2@tpe1.clusters.zeabur.com:22860
+```
 
 ---
 
@@ -49,18 +55,37 @@ ghcr.io/dev-longshun/new-api:latest
 
 ### 5. 配置环境变量
 
-在 new-api 服务的 Variables 面板中添加以下环境变量：
+在 new-api 服务的 **Variable** 面板中逐条添加：
 
-| 变量名 | 示例值 | 说明 |
-|---|---|---|
-| `SQL_DSN` | `postgresql://root:<密码>@<postgres内网host>:5432/new-api` | PostgreSQL 连接串 |
-| `REDIS_CONN_STRING` | `redis://<redis内网host>:6379` | Redis 连接串 |
-| `TZ` | `Asia/Shanghai` | 时区 |
-| `SESSION_SECRET` | 随机字符串 | 会话密钥，**必须修改** |
-| `ERROR_LOG_ENABLED` | `true` | 启用错误日志 |
-| `BATCH_UPDATE_ENABLED` | `true` | 启用批量更新 |
+**SQL_DSN**
+```
+postgresql://root:A5P0OUgl6B9xi3s4MawrqcoWQIC728E1@tpe1.clusters.zeabur.com:24791/zeabur
+```
 
-> `SQL_DSN` 和 `REDIS_CONN_STRING` 中的 host 填 Zeabur 内网域名，服务之间通过内网互通，无需暴露端口。
+**REDIS_CONN_STRING**
+```
+redis://:E06dRMwBgmvx3o45nkcpSr1l7Hji98G2@tpe1.clusters.zeabur.com:22860
+```
+
+**TZ**
+```
+Asia/Shanghai
+```
+
+**SESSION_SECRET**
+```
+（填一段随机字符串，必须修改）
+```
+
+**ERROR_LOG_ENABLED**
+```
+true
+```
+
+**BATCH_UPDATE_ENABLED**
+```
+true
+```
 
 ---
 
