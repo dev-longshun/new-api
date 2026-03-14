@@ -1,13 +1,13 @@
 # 本地开发用 — 只启动基础设施（postgres + redis）
 # new-api 本地编译直接运行，无需 Docker build
 
-version: '3.4'
-
 services:
   redis:
     image: redis:latest
     container_name: redis
     restart: always
+    ports:
+      - "6379:6379"
 
   postgres:
     image: postgres:15

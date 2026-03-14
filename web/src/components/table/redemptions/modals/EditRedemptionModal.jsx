@@ -286,12 +286,12 @@ const EditRedemptionModal = (props) => {
 
                   <Row gutter={12}>
                     <Col span={12}>
-                      <Form.AutoComplete
+                      <Form.InputNumber
                         field='quota'
                         label={t('额度')}
                         placeholder={t('请输入额度')}
                         style={{ width: '100%' }}
-                        type='number'
+                        min={0}
                         rules={[
                           { required: true, message: t('请输入额度') },
                           {
@@ -306,16 +306,29 @@ const EditRedemptionModal = (props) => {
                         extraText={renderQuotaWithPrompt(
                           Number(values.quota) || 0,
                         )}
-                        data={[
-                          { value: 500000, label: '1$' },
-                          { value: 5000000, label: '10$' },
-                          { value: 25000000, label: '50$' },
-                          { value: 50000000, label: '100$' },
-                          { value: 250000000, label: '500$' },
-                          { value: 500000000, label: '1000$' },
-                        ]}
                         showClear
                       />
+                      <div className='flex flex-wrap gap-2 mt-1'>
+                        {[
+                          { value: 500000, label: '$1' },
+                          { value: 5000000, label: '$10' },
+                          { value: 25000000, label: '$50' },
+                          { value: 50000000, label: '$100' },
+                          { value: 250000000, label: '$500' },
+                          { value: 500000000, label: '$1000' },
+                        ].map((item) => (
+                          <Tag
+                            key={item.value}
+                            color={values.quota === item.value ? 'blue' : undefined}
+                            type={values.quota === item.value ? 'solid' : 'ghost'}
+                            size='large'
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => formApiRef.current?.setValue('quota', item.value)}
+                          >
+                            {item.label}
+                          </Tag>
+                        ))}
+                      </div>
                     </Col>
                     {!isEdit && (
                       <Col span={12}>

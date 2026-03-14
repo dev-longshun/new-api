@@ -117,7 +117,10 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "[3/4] 启动基础设施（postgres + redis）"
-docker compose -f docker-compose.dev.yml up -d
+# 停掉旧的本地进程和可能占 3000 端口的 Docker 容器
+pkill -f new-api-dev 2>/dev/null || true
+docker stop new-api 2>/dev/null || true
+docker compose -f docker-compose.dev.yml up -d --remove-orphans
 if [ $? -ne 0 ]; then
   echo "Docker 启动失败，请检查 Docker Desktop 状态。"
   read -p "按回车键退出..."
@@ -133,9 +136,6 @@ for i in {1..30}; do
 done
 
 echo "[4/4] 启动 new-api 本地服务"
-# 停止旧进程
-pkill -f new-api-dev 2>/dev/null || true
-sleep 1
 
 export SQL_DSN="postgresql://root:123456@127.0.0.1:5432/new-api"
 export REDIS_CONN_STRING="redis://127.0.0.1"
