@@ -53,14 +53,27 @@ const APP_CONFIGS = {
 };
 
 function getServerAddress() {
+  const origin = window.location.origin;
   try {
     const raw = localStorage.getItem('status');
     if (raw) {
       const status = JSON.parse(raw);
-      if (status.server_address) return status.server_address;
+      if (status.server_address) {
+        // 存储的是 localhost 地址，但当前访问不是 localhost，则用当前域名
+        const isStoredLocal =
+          /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(
+            status.server_address,
+          );
+        const isCurrentLocal =
+          /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(origin);
+        if (isStoredLocal && !isCurrentLocal) {
+          return origin;
+        }
+        return status.server_address;
+      }
     }
   } catch (_) {}
-  return window.location.origin;
+  return origin;
 }
 
 function buildCCSwitchURL(app, name, models, apiKey) {

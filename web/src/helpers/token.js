@@ -62,20 +62,30 @@ export async function fetchTokenKeys() {
  * @returns {string} 服务器地址
  */
 export function getServerAddress() {
-  let status = localStorage.getItem('status');
+  const origin = window.location.origin;
   let serverAddress = '';
 
-  if (status) {
-    try {
-      status = JSON.parse(status);
+  try {
+    const raw = localStorage.getItem('status');
+    if (raw) {
+      const status = JSON.parse(raw);
       serverAddress = status.server_address || '';
-    } catch (error) {
-      console.error('Failed to parse status from localStorage:', error);
     }
+  } catch (error) {
+    console.error('Failed to parse status from localStorage:', error);
   }
 
   if (!serverAddress) {
-    serverAddress = window.location.origin;
+    return origin;
+  }
+
+  // 存储的是 localhost 地址，但当前访问不是 localhost，则用当前域名
+  const isStoredLocal =
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(serverAddress);
+  const isCurrentLocal =
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(origin);
+  if (isStoredLocal && !isCurrentLocal) {
+    return origin;
   }
 
   return serverAddress;
