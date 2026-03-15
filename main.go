@@ -2,13 +2,16 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
@@ -192,10 +195,44 @@ func main() {
 	// Log startup success message
 	common.LogStartupSuccess(startTime, port)
 
-	err = server.Run(":" + port)
-	if err != nil {
-		common.FatalLog("failed to start HTTP server: " + err.Error())
+	// Graceful shutdown: flush in-memory caches before exit
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: server,
 	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			common.FatalLog("failed to start HTTP server: " + err.Error())
+		}
+	}()
+
+	// Wait for SIGINT or SIGTERM
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	common.SysLog("shutdown signal received, shutting down gracefully...")
+
+	// Give active requests up to 30s to finish
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		common.SysLog("HTTP server forced to shutdown: " + err.Error())
+	}
+
+	// Flush batch updates (user quota, used_quota, request_count, etc.)
+	if common.BatchUpdateEnabled {
+		common.SysLog("flushing batch updates...")
+		model.FlushBatchUpdates()
+	}
+
+	// Flush quota data cache (dashboard chart data)
+	if common.DataExportEnabled {
+		common.SysLog("flushing quota data cache...")
+		model.SaveQuotaDataCache()
+	}
+
+	common.SysLog("graceful shutdown completed")
 }
 
 func InjectUmamiAnalytics() {

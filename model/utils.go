@@ -97,6 +97,12 @@ func batchUpdate() {
 	common.SysLog("batch update finished")
 }
 
+// FlushBatchUpdates forces an immediate flush of all pending batch updates to the database.
+// Called during graceful shutdown to prevent data loss.
+func FlushBatchUpdates() {
+	batchUpdate()
+}
+
 func RecordExist(err error) (bool, error) {
 	if err == nil {
 		return true, nil
