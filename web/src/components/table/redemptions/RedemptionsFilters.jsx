@@ -18,13 +18,16 @@ For commercial licensing, please contact support@quantumnous.com
 */
 
 import React, { useRef } from 'react';
-import { Form, Button } from '@douyinfe/semi-ui';
+import { Form, Button, Select } from '@douyinfe/semi-ui';
 import { IconSearch } from '@douyinfe/semi-icons';
 
 const RedemptionsFilters = ({
   formInitValues,
   setFormApi,
   searchRedemptions,
+  traceRedemption,
+  searchMode,
+  setSearchMode,
   loading,
   searching,
   t,
@@ -35,9 +38,19 @@ const RedemptionsFilters = ({
   const handleReset = () => {
     if (!formApiRef.current) return;
     formApiRef.current.reset();
+    setSearchMode('keyword');
     setTimeout(() => {
       searchRedemptions();
     }, 100);
+  };
+
+  const handleSubmit = () => {
+    if (searchMode === 'key') {
+      const values = formApiRef.current ? formApiRef.current.getValues() : {};
+      traceRedemption(values.searchKeyword || '');
+    } else {
+      searchRedemptions();
+    }
   };
 
   return (
@@ -47,7 +60,7 @@ const RedemptionsFilters = ({
         setFormApi(api);
         formApiRef.current = api;
       }}
-      onSubmit={searchRedemptions}
+      onSubmit={handleSubmit}
       allowEmpty={true}
       autoComplete='off'
       layout='horizontal'
@@ -56,11 +69,20 @@ const RedemptionsFilters = ({
       className='w-full md:w-auto order-1 md:order-2'
     >
       <div className='flex flex-col md:flex-row items-center gap-2 w-full md:w-auto'>
+        <Select
+          value={searchMode}
+          onChange={setSearchMode}
+          size='small'
+          style={{ width: 120 }}
+        >
+          <Select.Option value='keyword'>{t('名称/ID')}</Select.Option>
+          <Select.Option value='key'>{t('兑换码Key')}</Select.Option>
+        </Select>
         <div className='relative w-full md:w-64'>
           <Form.Input
             field='searchKeyword'
             prefix={<IconSearch />}
-            placeholder={t('关键字(id或者名称)')}
+            placeholder={searchMode === 'key' ? t('输入完整兑换码') : t('关键字(id或者名称)')}
             showClear
             pure
             size='small'

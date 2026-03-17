@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"unicode/utf8"
@@ -204,6 +205,67 @@ func DeleteInvalidRedemption(c *gin.Context) {
 		"data":    rows,
 	})
 	return
+}
+
+func TraceRedemption(c *gin.Context) {
+	key := c.Query("key")
+	if key == "" {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	redemption, err := model.TraceRedemptionByKey(key)
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgNotFound)
+		return
+	}
+	result := gin.H{"redemption": redemption}
+	if redemption.UsedUserId > 0 {
+		var user struct {
+			Id          int    `json:"id"`
+			Username    string `json:"username"`
+			DisplayName string `json:"display_name"`
+			Status      int    `json:"status"`
+			Quota       int    `json:"quota"`
+		}
+		if err := model.DB.Unscoped().Model(&model.User{}).Select("id, username, display_name, status, quota").Where("id = ?", redemption.UsedUserId).First(&user).Error; err == nil {
+			result["user"] = user
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    result,
+	})
+}
+
+func BanRedemptionUser(c *gin.Context) {
+	var req struct {
+		Id int `json:"id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	userId, username, err := model.BanRedemptionUser(req.Id)
+	if err != nil {
+		if err.Error() == "redemption not used" {
+			common.ApiErrorI18n(c, i18n.MsgRedemptionNotUsed)
+			return
+		}
+		common.ApiError(c, err)
+		return
+	}
+	adminId := c.GetInt("id")
+	model.RecordLog(adminId, model.LogTypeManage,
+		fmt.Sprintf("通过兑换码 ID %d 封禁用户 %s (ID %d)", req.Id, username, userId))
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data": gin.H{
+			"user_id":  userId,
+			"username": username,
+		},
+	})
 }
 
 func validateExpiredTime(c *gin.Context, expired int64) (bool, string) {

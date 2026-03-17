@@ -202,6 +202,41 @@ func DeleteRedemptionsByIds(ids []int) (int64, error) {
 	return result.RowsAffected, result.Error
 }
 
+func TraceRedemptionByKey(key string) (*Redemption, error) {
+	if key == "" {
+		return nil, errors.New("key is empty")
+	}
+	redemption := &Redemption{}
+	err := DB.Unscoped().Where(commonKeyCol+" = ?", key).First(redemption).Error
+	if err != nil {
+		return nil, err
+	}
+	return redemption, nil
+}
+
+func BanRedemptionUser(redemptionId int) (userId int, username string, err error) {
+	redemption := &Redemption{}
+	err = DB.Unscoped().First(redemption, "id = ?", redemptionId).Error
+	if err != nil {
+		return 0, "", err
+	}
+	if redemption.Status != common.RedemptionCodeStatusUsed || redemption.UsedUserId <= 0 {
+		return 0, "", errors.New("redemption not used")
+	}
+
+	userId = redemption.UsedUserId
+	username, _ = GetUsernameById(userId, false)
+
+	err = DB.Model(&User{}).Where("id = ?", userId).Update("status", common.UserStatusDisabled).Error
+	if err != nil {
+		return 0, "", err
+	}
+	if e := invalidateUserCache(userId); e != nil {
+		common.SysLog("failed to invalidate user cache: " + e.Error())
+	}
+	return
+}
+
 func DeleteInvalidRedemptions() (int64, error) {
 	now := common.GetTimestamp()
 	result := DB.Where("status IN ? OR (status = ? AND expired_time != 0 AND expired_time < ?)", []int{common.RedemptionCodeStatusUsed, common.RedemptionCodeStatusDisabled}, common.RedemptionCodeStatusEnabled, now).Delete(&Redemption{})

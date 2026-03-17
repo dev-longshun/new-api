@@ -52,6 +52,9 @@ const RedemptionsPage = () => {
     formInitValues,
     setFormApi,
     searchRedemptions,
+    traceRedemption,
+    searchMode,
+    setSearchMode,
     loading,
     searching,
 
@@ -99,6 +102,9 @@ const RedemptionsPage = () => {
                 formInitValues={formInitValues}
                 setFormApi={setFormApi}
                 searchRedemptions={searchRedemptions}
+                traceRedemption={traceRedemption}
+                searchMode={searchMode}
+                setSearchMode={setSearchMode}
                 loading={loading}
                 searching={searching}
                 t={t}

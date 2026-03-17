@@ -51,6 +51,7 @@ export const useRedemptionsData = () => {
 
   // UI state
   const [compactMode, setCompactMode] = useTableCompactMode('redemptions');
+  const [searchMode, setSearchMode] = useState('keyword'); // 'keyword' | 'key'
 
   // Form state
   const formInitValues = {
@@ -118,6 +119,53 @@ export const useRedemptionsData = () => {
       showError(error.message);
     }
     setSearching(false);
+  };
+
+  // Trace redemption by key (includes soft-deleted records)
+  const traceRedemption = async (key) => {
+    if (!key) {
+      await loadRedemptions(1, pageSize);
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await API.get(`/api/redemption/trace?key=${encodeURIComponent(key)}`);
+      const { success, message, data } = res.data;
+      if (success) {
+        const redemption = data.redemption;
+        if (data.user) {
+          redemption._user = data.user;
+        }
+        setRedemptions([redemption]);
+        setTokenCount(1);
+        setActivePage(1);
+      } else {
+        showError(message);
+        setRedemptions([]);
+        setTokenCount(0);
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+    setSearching(false);
+  };
+
+  // Ban the user who redeemed a code
+  const banRedemptionUser = async (id) => {
+    setLoading(true);
+    try {
+      const res = await API.post('/api/redemption/revoke', { id });
+      const { success, message } = res.data;
+      if (success) {
+        showSuccess(t('已封禁该用户'));
+        await refresh();
+      } else {
+        showError(message);
+      }
+    } catch (error) {
+      showError(error.message);
+    }
+    setLoading(false);
   };
 
   // Manage redemption codes (CRUD operations)
@@ -373,10 +421,14 @@ export const useRedemptionsData = () => {
     // UI state
     compactMode,
     setCompactMode,
+    searchMode,
+    setSearchMode,
 
     // Data operations
     loadRedemptions,
     searchRedemptions,
+    traceRedemption,
+    banRedemptionUser,
     manageRedemption,
     refresh,
     copyText,

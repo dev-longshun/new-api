@@ -49,28 +49,40 @@ const renderTimestamp = (timestamp) => {
  * Render redemption code status
  */
 const renderStatus = (status, record, t) => {
+  const tags = [];
+
   if (isExpired(record)) {
-    return (
-      <Tag color='orange' shape='circle'>
+    tags.push(
+      <Tag key='expired' color='orange' shape='circle'>
         {t('已过期')}
       </Tag>
     );
+  } else {
+    const statusConfig = REDEMPTION_STATUS_MAP[status];
+    if (statusConfig) {
+      tags.push(
+        <Tag key='status' color={statusConfig.color} shape='circle'>
+          {t(statusConfig.text)}
+        </Tag>
+      );
+    } else {
+      tags.push(
+        <Tag key='unknown' color='black' shape='circle'>
+          {t('未知状态')}
+        </Tag>
+      );
+    }
   }
 
-  const statusConfig = REDEMPTION_STATUS_MAP[status];
-  if (statusConfig) {
-    return (
-      <Tag color={statusConfig.color} shape='circle'>
-        {t(statusConfig.text)}
+  if (record.deleted_at) {
+    tags.push(
+      <Tag key='deleted' color='red' shape='circle' style={{ marginLeft: 4 }}>
+        {t('已删除')}
       </Tag>
     );
   }
 
-  return (
-    <Tag color='black' shape='circle'>
-      {t('未知状态')}
-    </Tag>
-  );
+  return <>{tags}</>;
 };
 
 /**
@@ -86,6 +98,7 @@ export const getRedemptionsColumns = ({
   redemptions,
   activePage,
   showDeleteRedemptionModal,
+  showRevokeRedemptionModal,
 }) => {
   return [
     {
@@ -139,6 +152,25 @@ export const getRedemptionsColumns = ({
       },
     },
     {
+      title: t('兑换人'),
+      dataIndex: '_user',
+      render: (text, record) => {
+        const user = record._user;
+        if (!user) return <div>-</div>;
+        return (
+          <div>
+            <div>{user.username}{user.display_name ? ` (${user.display_name})` : ''}</div>
+            <div style={{ fontSize: 12, color: 'var(--semi-color-text-2)' }}>
+              <Tag size='small' color={user.status === 1 ? 'green' : 'red'} shape='circle'>
+                {user.status === 1 ? t('正常') : t('已禁用')}
+              </Tag>
+              {' '}{t('当前额度')}: {renderQuota(user.quota)}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
       title: '',
       dataIndex: 'operate',
       fixed: 'right',
@@ -174,6 +206,17 @@ export const getRedemptionsColumns = ({
               manageRedemption(record.id, REDEMPTION_ACTIONS.ENABLE, record);
             },
             disabled: record.status === REDEMPTION_STATUS.USED,
+          });
+        }
+
+        if (record.status === REDEMPTION_STATUS.USED && record.used_user_id > 0) {
+          moreMenuItems.push({
+            node: 'item',
+            name: t('封禁用户'),
+            type: 'danger',
+            onClick: () => {
+              showRevokeRedemptionModal(record);
+            },
           });
         }
 
