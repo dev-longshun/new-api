@@ -1058,6 +1058,14 @@ func DevExhaustActiveRecord(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	// Deduct remaining quota from user before marking as used
+	remaining := record.Quota - record.UsedQuota
+	if remaining > 0 {
+		if err := model.DecreaseUserQuotaDirect(userId, remaining); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	}
 	if err := model.MarkRecordUsedAndActivateNext(record); err != nil {
 		common.ApiError(c, err)
 		return

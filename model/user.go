@@ -924,6 +924,12 @@ func decreaseUserQuota(id int, quota int) (err error) {
 	return err
 }
 
+// DecreaseUserQuotaDirect deducts quota without triggering active record sync.
+// Used by dev tools where the active record is handled separately.
+func DecreaseUserQuotaDirect(id int, quota int) error {
+	return DB.Model(&User{}).Where("id = ?", id).Update("quota", gorm.Expr("quota - ?", quota)).Error
+}
+
 func DeltaUpdateUserQuota(id int, delta int) (err error) {
 	if delta == 0 {
 		return nil
