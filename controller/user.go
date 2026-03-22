@@ -1031,6 +1031,20 @@ func TopUp(c *gin.Context) {
 	})
 }
 
+func GetUserQuotaQueue(c *gin.Context) {
+	userId := c.GetInt("id")
+	info, err := model.GetUserQueueInfo(userId)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "",
+		"data":    info,
+	})
+}
+
 type UpdateUserSettingRequest struct {
 	QuotaWarningType                 string  `json:"notify_type"`
 	QuotaWarningThreshold            float64 `json:"quota_warning_threshold"`

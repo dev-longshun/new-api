@@ -118,9 +118,24 @@ const TopUp = () => {
       const { success, message, data } = res.data;
       if (success) {
         showSuccess(t('兑换成功！'));
+        // Fetch queue info to show in modal
+        let queueContent = t('成功兑换额度：') + renderQuota(data);
+        try {
+          const queueRes = await API.get('/api/user/quota/queue');
+          if (queueRes.data.success) {
+            const q = queueRes.data.data;
+            if (q.pending_count > 0) {
+              queueContent += `\n${t('队列中还有')} ${q.pending_count} ${t('张兑换码等待激活')}`;
+            }
+            if (q.active_record && q.active_record.expired_time > 0) {
+              const expireDate = new Date(q.active_record.expired_time * 1000);
+              queueContent += `\n${t('当前额度将于')} ${expireDate.toLocaleString()} ${t('过期')}`;
+            }
+          }
+        } catch (_) {}
         Modal.success({
           title: t('兑换成功！'),
-          content: t('成功兑换额度：') + renderQuota(data),
+          content: queueContent,
           centered: true,
         });
         if (userState.user) {

@@ -15,18 +15,19 @@ import (
 var ErrRedeemFailed = errors.New("redeem.failed")
 
 type Redemption struct {
-	Id           int            `json:"id"`
-	UserId       int            `json:"user_id"`
-	Key          string         `json:"key" gorm:"type:char(32);uniqueIndex"`
-	Status       int            `json:"status" gorm:"default:1"`
-	Name         string         `json:"name" gorm:"index"`
-	Quota        int            `json:"quota" gorm:"default:100"`
-	CreatedTime  int64          `json:"created_time" gorm:"bigint"`
-	RedeemedTime int64          `json:"redeemed_time" gorm:"bigint"`
-	Count        int            `json:"count" gorm:"-:all"` // only for api request
-	UsedUserId   int            `json:"used_user_id"`
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
-	ExpiredTime  int64          `json:"expired_time" gorm:"bigint"` // 过期时间，0 表示不过期
+	Id            int            `json:"id"`
+	UserId        int            `json:"user_id"`
+	Key           string         `json:"key" gorm:"type:char(32);uniqueIndex"`
+	Status        int            `json:"status" gorm:"default:1"`
+	Name          string         `json:"name" gorm:"index"`
+	Quota         int            `json:"quota" gorm:"default:100"`
+	CreatedTime   int64          `json:"created_time" gorm:"bigint"`
+	RedeemedTime  int64          `json:"redeemed_time" gorm:"bigint"`
+	Count         int            `json:"count" gorm:"-:all"` // only for api request
+	UsedUserId    int            `json:"used_user_id"`
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
+	ExpiredTime   int64          `json:"expired_time" gorm:"bigint"`   // 过期时间，0 表示不过期
+	QuotaDuration int64          `json:"quota_duration" gorm:"bigint"` // 额度有效期秒数，0=永不过期
 }
 
 func GetAllRedemptions(startIdx int, num int) (redemptions []*Redemption, total int64, err error) {
@@ -140,15 +141,49 @@ func Redeem(key string, userId int) (quota int, err error) {
 		if redemption.ExpiredTime != 0 && redemption.ExpiredTime < common.GetTimestamp() {
 			return errors.New("该兑换码已过期")
 		}
-		err = tx.Model(&User{}).Where("id = ?", userId).Update("quota", gorm.Expr("quota + ?", redemption.Quota)).Error
-		if err != nil {
-			return err
+
+		// Check if user already has an active record
+		var activeCount int64
+		tx.Model(&RedemptionQuotaRecord{}).
+			Where("user_id = ? AND status = ?", userId, RedemptionQuotaStatusActive).
+			Count(&activeCount)
+
+		record := &RedemptionQuotaRecord{
+			UserId:        userId,
+			RedemptionId:  redemption.Id,
+			Quota:         redemption.Quota,
+			UsedQuota:     0,
+			Status:        RedemptionQuotaStatusPending,
+			CreatedTime:   common.GetTimestamp(),
+			QuotaDuration: redemption.QuotaDuration,
 		}
+
+		if activeCount == 0 {
+			// No active record — activate immediately and add quota to user
+			record.Status = RedemptionQuotaStatusActive
+			record.ActivatedTime = common.GetTimestamp()
+			if redemption.QuotaDuration > 0 {
+				record.ExpiredTime = record.ActivatedTime + redemption.QuotaDuration
+			}
+			if err := tx.Create(record).Error; err != nil {
+				return err
+			}
+			// Add quota to user
+			if err := tx.Model(&User{}).Where("id = ?", userId).
+				Update("quota", gorm.Expr("quota + ?", redemption.Quota)).Error; err != nil {
+				return err
+			}
+		} else {
+			// Queue it as pending — do NOT add quota yet
+			if err := tx.Create(record).Error; err != nil {
+				return err
+			}
+		}
+
 		redemption.RedeemedTime = common.GetTimestamp()
 		redemption.Status = common.RedemptionCodeStatusUsed
 		redemption.UsedUserId = userId
-		err = tx.Save(redemption).Error
-		return err
+		return tx.Save(redemption).Error
 	})
 	if err != nil {
 		common.SysError("redemption failed: " + err.Error())
@@ -172,7 +207,7 @@ func (redemption *Redemption) SelectUpdate() error {
 // Update Make sure your token's fields is completed, because this will update non-zero values
 func (redemption *Redemption) Update() error {
 	var err error
-	err = DB.Model(redemption).Select("name", "status", "quota", "redeemed_time", "expired_time").Updates(redemption).Error
+	err = DB.Model(redemption).Select("name", "status", "quota", "redeemed_time", "expired_time", "quota_duration").Updates(redemption).Error
 	return err
 }
 

@@ -66,6 +66,7 @@ const EditRedemptionModal = (props) => {
     quota: 100000,
     count: 1,
     expired_time: null,
+    quota_duration: 0,
   });
 
   const handleCancel = () => {
@@ -81,6 +82,10 @@ const EditRedemptionModal = (props) => {
         data.expired_time = null;
       } else {
         data.expired_time = new Date(data.expired_time * 1000);
+      }
+      // Convert seconds to hours for display
+      if (data.quota_duration > 0) {
+        data.quota_duration = Math.round(data.quota_duration / 3600);
       }
       formApiRef.current?.setValues({ ...getInitValues(), ...data });
     } else {
@@ -109,6 +114,11 @@ const EditRedemptionModal = (props) => {
     localInputs.count = parseInt(localInputs.count) || 0;
     localInputs.quota = parseInt(localInputs.quota) || 0;
     localInputs.name = name;
+    localInputs.quota_duration = parseInt(localInputs.quota_duration) || 0;
+    // Convert hours to seconds
+    if (localInputs.quota_duration > 0) {
+      localInputs.quota_duration = localInputs.quota_duration * 3600;
+    }
     if (!localInputs.expired_time) {
       localInputs.expired_time = 0;
     } else {
@@ -261,6 +271,17 @@ const EditRedemptionModal = (props) => {
                         type='dateTime'
                         placeholder={t('选择过期时间（可选，留空为永久）')}
                         style={{ width: '100%' }}
+                        showClear
+                      />
+                    </Col>
+                    <Col span={24}>
+                      <Form.InputNumber
+                        field='quota_duration'
+                        label={t('额度有效期（小时）')}
+                        placeholder={t('兑换后额度的有效时长，0 表示永不过期')}
+                        style={{ width: '100%' }}
+                        min={0}
+                        extraText={t('兑换码激活后开始计时，到期后剩余额度清零并激活下一张')}
                         showClear
                       />
                     </Col>

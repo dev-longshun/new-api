@@ -145,6 +145,18 @@ export const getRedemptionsColumns = ({
       },
     },
     {
+      title: t('额度有效期'),
+      dataIndex: 'quota_duration',
+      render: (text) => {
+        if (!text || text === 0) return <div>{t('永不过期')}</div>;
+        const hours = Math.round(text / 3600);
+        if (hours >= 24) {
+          return <div>{Math.round(hours / 24)}{t('天')}</div>;
+        }
+        return <div>{hours}{t('小时')}</div>;
+      },
+    },
+    {
       title: t('兑换人ID'),
       dataIndex: 'used_user_id',
       render: (text) => {
