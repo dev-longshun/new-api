@@ -148,9 +148,7 @@ const RechargeCard = ({
                     className='text-base sm:text-2xl font-bold mb-1'
                     style={{ color: 'white' }}
                   >
-                    {queueInfo?.active_record
-                      ? renderQuota(queueInfo.active_record.quota - queueInfo.active_record.used_quota)
-                      : renderQuota(userState?.user?.quota)}
+                    {renderQuota(userState?.user?.quota)}
                   </div>
                   {queueInfo?.active_record?.expired_time > 0 && (
                     <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginBottom: '2px' }}>
