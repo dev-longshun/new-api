@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 
 import React from 'react';
 import { Button } from '@douyinfe/semi-ui';
+import { isRoot } from '../../../helpers';
 
 const RedemptionsActions = ({
   selectedKeys,
@@ -28,6 +29,7 @@ const RedemptionsActions = ({
   batchDeleteSelectedRedemptions,
   batchDeleteRedemptions,
   selectByName,
+  onDeleteAll,
   t,
 }) => {
   // Add new redemption code
@@ -85,6 +87,17 @@ const RedemptionsActions = ({
       >
         {t('清除失效兑换码')}
       </Button>
+
+      {isRoot() && (
+        <Button
+          type='danger'
+          className='w-full md:w-auto'
+          onClick={onDeleteAll}
+          size='small'
+        >
+          {t('删除所有兑换码')}
+        </Button>
+      )}
     </div>
   );
 };

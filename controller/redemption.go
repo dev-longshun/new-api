@@ -193,6 +193,42 @@ func BatchDeleteRedemptions(c *gin.Context) {
 	})
 }
 
+func DeleteAllRedemptions(c *gin.Context) {
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &req); err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	if req.Password == "" {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+
+	userId := c.GetInt("id")
+	currentUser, err := model.GetUserById(userId, true)
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgUserNotExists)
+		return
+	}
+
+	if !common.ValidatePasswordAndHash(req.Password, currentUser.Password) {
+		common.ApiErrorI18n(c, i18n.MsgUserOriginalPasswordError)
+		return
+	}
+
+	count, err := model.DeleteAllRedemptions()
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
+	}
+
+	common.ApiSuccessI18n(c, i18n.MsgRedemptionDeleteAllSuccess, nil, map[string]any{
+		"Count": count,
+	})
+}
+
 func DeleteInvalidRedemption(c *gin.Context) {
 	rows, err := model.DeleteInvalidRedemptions()
 	if err != nil {

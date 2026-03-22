@@ -17,13 +17,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
+import React, { useState } from 'react';
 import CardPro from '../../common/ui/CardPro';
 import RedemptionsTable from './RedemptionsTable';
 import RedemptionsActions from './RedemptionsActions';
 import RedemptionsFilters from './RedemptionsFilters';
 import RedemptionsDescription from './RedemptionsDescription';
 import EditRedemptionModal from './modals/EditRedemptionModal';
+import DeleteAllRedemptionsModal from './modals/DeleteAllRedemptionsModal';
 import { useRedemptionsData } from '../../../hooks/redemptions/useRedemptionsData';
 import { useIsMobile } from '../../../hooks/common/useIsMobile';
 import { createCardProPagination } from '../../../helpers/utils';
@@ -31,6 +32,7 @@ import { createCardProPagination } from '../../../helpers/utils';
 const RedemptionsPage = () => {
   const redemptionsData = useRedemptionsData();
   const isMobile = useIsMobile();
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
 
   const {
     // Edit state
@@ -75,6 +77,13 @@ const RedemptionsPage = () => {
         handleClose={closeEdit}
       />
 
+      <DeleteAllRedemptionsModal
+        visible={showDeleteAll}
+        onCancel={() => setShowDeleteAll(false)}
+        onSuccess={refresh}
+        t={t}
+      />
+
       <CardPro
         type='type1'
         descriptionArea={
@@ -94,6 +103,7 @@ const RedemptionsPage = () => {
               batchDeleteSelectedRedemptions={batchDeleteSelectedRedemptions}
               batchDeleteRedemptions={batchDeleteRedemptions}
               selectByName={selectByName}
+              onDeleteAll={() => setShowDeleteAll(true)}
               t={t}
             />
 

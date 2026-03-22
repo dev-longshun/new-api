@@ -49,6 +49,8 @@ redemption.expired: "該兌換碼已過期"
 redemption.failed: "兌換失敗，請稍後重試"
 redemption.not_provided: "未提供兌換碼"
 redemption.expire_time_invalid: "過期時間不能早於當前時間"
+redemption.not_used: "該兌換碼未被使用，無法撤銷"
+redemption.delete_all_success: "已成功刪除 {{.Count}} 條兌換碼"
 
 # User messages
 user.password_login_disabled: "管理員關閉了密碼登錄"

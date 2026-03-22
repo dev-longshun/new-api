@@ -49,6 +49,7 @@ redemption.failed: "Redemption failed, please try again later"
 redemption.not_provided: "Redemption code not provided"
 redemption.expire_time_invalid: "Expiration time cannot be earlier than current time"
 redemption.not_used: "This redemption code has not been used and cannot be revoked"
+redemption.delete_all_success: "Successfully deleted {{.Count}} redemption codes"
 
 # User messages
 user.password_login_disabled: "Password login has been disabled by administrator"
