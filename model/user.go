@@ -328,6 +328,11 @@ func HardDeleteUserById(id int) error {
 	return err
 }
 
+func HardDeleteDisabledUsers() (int64, error) {
+	result := DB.Unscoped().Where("status = ? AND role NOT IN ?", common.UserStatusDisabled, []int{common.RoleAdminUser, common.RoleRootUser}).Delete(&User{})
+	return result.RowsAffected, result.Error
+}
+
 func inviteUser(inviterId int) (err error) {
 	user, err := GetUserById(inviterId, true)
 	if err != nil {

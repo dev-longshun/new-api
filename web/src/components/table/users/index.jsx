@@ -26,6 +26,7 @@ import UsersDescription from './UsersDescription';
 import AddUserModal from './modals/AddUserModal';
 import EditUserModal from './modals/EditUserModal';
 import ResetAllQuotaModal from './modals/ResetAllQuotaModal';
+import DeleteDisabledUsersModal from './modals/DeleteDisabledUsersModal';
 import { useUsersData } from '../../../hooks/users/useUsersData';
 import { useIsMobile } from '../../../hooks/common/useIsMobile';
 import { createCardProPagination } from '../../../helpers/utils';
@@ -34,6 +35,7 @@ const UsersPage = () => {
   const usersData = useUsersData();
   const isMobile = useIsMobile();
   const [showResetAllQuota, setShowResetAllQuota] = useState(false);
+  const [showDeleteDisabled, setShowDeleteDisabled] = useState(false);
 
   const {
     // Modal state
@@ -86,6 +88,13 @@ const UsersPage = () => {
         t={t}
       />
 
+      <DeleteDisabledUsersModal
+        visible={showDeleteDisabled}
+        onCancel={() => setShowDeleteDisabled(false)}
+        onSuccess={refresh}
+        t={t}
+      />
+
       <CardPro
         type='type1'
         descriptionArea={
@@ -97,7 +106,7 @@ const UsersPage = () => {
         }
         actionsArea={
           <div className='flex flex-col md:flex-row justify-between items-center gap-2 w-full'>
-            <UsersActions setShowAddUser={setShowAddUser} setShowResetAllQuota={setShowResetAllQuota} t={t} />
+            <UsersActions setShowAddUser={setShowAddUser} setShowResetAllQuota={setShowResetAllQuota} setShowDeleteDisabled={setShowDeleteDisabled} t={t} />
 
             <UsersFilters
               formInitValues={formInitValues}

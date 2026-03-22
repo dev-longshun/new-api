@@ -93,6 +93,7 @@ user.telegram_id_empty: "Telegram ID is empty!"
 user.telegram_not_bound: "This Telegram account is not bound"
 user.linux_do_id_empty: "Linux DO ID is empty!"
 user.reset_all_quota_success: "Successfully reset quota for {{.Count}} common users"
+user.delete_disabled_success: "Successfully deleted {{.Count}} disabled users"
 
 # Quota messages
 quota.negative: "Quota cannot be negative!"

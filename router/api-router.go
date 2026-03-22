@@ -131,6 +131,7 @@ func SetApiRouter(router *gin.Engine) {
 
 				// Root-only user operations
 				adminRoute.POST("/reset-all-quota", middleware.RootAuth(), controller.ResetAllUserQuota)
+		adminRoute.DELETE("/disabled", middleware.RootAuth(), controller.DeleteDisabledUsers)
 			}
 		}
 

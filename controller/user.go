@@ -1223,3 +1223,39 @@ func ResetAllUserQuota(c *gin.Context) {
 		"Count": count,
 	})
 }
+
+func DeleteDisabledUsers(c *gin.Context) {
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := common.DecodeJson(c.Request.Body, &req); err != nil {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+	if req.Password == "" {
+		common.ApiErrorI18n(c, i18n.MsgInvalidParams)
+		return
+	}
+
+	userId := c.GetInt("id")
+	currentUser, err := model.GetUserById(userId, true)
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgUserNotExists)
+		return
+	}
+
+	if !common.ValidatePasswordAndHash(req.Password, currentUser.Password) {
+		common.ApiErrorI18n(c, i18n.MsgUserOriginalPasswordError)
+		return
+	}
+
+	count, err := model.HardDeleteDisabledUsers()
+	if err != nil {
+		common.ApiErrorI18n(c, i18n.MsgOperationFailed)
+		return
+	}
+
+	common.ApiSuccessI18n(c, i18n.MsgUserDeleteDisabledSuccess, nil, map[string]any{
+		"Count": count,
+	})
+}

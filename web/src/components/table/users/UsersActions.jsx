@@ -21,7 +21,7 @@ import React from 'react';
 import { Button } from '@douyinfe/semi-ui';
 import { isRoot } from '../../../helpers';
 
-const UsersActions = ({ setShowAddUser, setShowResetAllQuota, t }) => {
+const UsersActions = ({ setShowAddUser, setShowResetAllQuota, setShowDeleteDisabled, t }) => {
   // Add new user
   const handleAddUser = () => {
     setShowAddUser(true);
@@ -33,14 +33,24 @@ const UsersActions = ({ setShowAddUser, setShowResetAllQuota, t }) => {
         {t('添加用户')}
       </Button>
       {isRoot() && (
-        <Button
-          className='w-full md:w-auto'
-          type='danger'
-          onClick={() => setShowResetAllQuota(true)}
-          size='small'
-        >
-          {t('清空所有用户额度')}
-        </Button>
+        <>
+          <Button
+            className='w-full md:w-auto'
+            type='danger'
+            onClick={() => setShowResetAllQuota(true)}
+            size='small'
+          >
+            {t('清空所有用户额度')}
+          </Button>
+          <Button
+            className='w-full md:w-auto'
+            type='danger'
+            onClick={() => setShowDeleteDisabled(true)}
+            size='small'
+          >
+            {t('删除已禁用用户')}
+          </Button>
+        </>
       )}
     </div>
   );

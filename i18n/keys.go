@@ -103,6 +103,7 @@ const (
 	MsgUserTelegramNotBound          = "user.telegram_not_bound"
 	MsgUserLinuxDOIdEmpty            = "user.linux_do_id_empty"
 	MsgUserResetAllQuotaSuccess      = "user.reset_all_quota_success"
+	MsgUserDeleteDisabledSuccess     = "user.delete_disabled_success"
 )
 
 // Quota related messages
