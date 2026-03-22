@@ -27,6 +27,7 @@ import {
   renderQuotaWithAmount,
   copy,
   getQuotaPerUnit,
+  isRoot,
 } from '../../helpers';
 import { Modal, Toast } from '@douyinfe/semi-ui';
 import { useTranslation } from 'react-i18next';
@@ -89,6 +90,7 @@ const TopUp = () => {
 
   // 队列信息
   const [queueInfo, setQueueInfo] = useState(null);
+  const [queueLoading, setQueueLoading] = useState(true);
 
   // 订阅相关
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
@@ -345,12 +347,29 @@ const TopUp = () => {
   };
 
   const fetchQueueInfo = async () => {
+    setQueueLoading(true);
     try {
       const res = await API.get('/api/user/quota/queue');
       if (res.data?.success) {
         setQueueInfo(res.data.data);
       }
     } catch (_) {}
+    setQueueLoading(false);
+  };
+
+  const devExhaustActive = async () => {
+    try {
+      const res = await API.post('/api/user/quota/dev/exhaust-active');
+      if (res.data?.success) {
+        showSuccess(t('已强制耗尽激活中额度'));
+        await fetchQueueInfo();
+        await getUserQuota();
+      } else {
+        showError(res.data?.message || t('操作失败'));
+      }
+    } catch (e) {
+      showError(String(e));
+    }
   };
 
   const getSubscriptionPlans = async () => {
@@ -805,6 +824,9 @@ const TopUp = () => {
           allSubscriptions={allSubscriptions}
           reloadSubscriptionSelf={getSubscriptionSelf}
           queueInfo={queueInfo}
+          queueLoading={queueLoading}
+          isRootUser={isRoot()}
+          devExhaustActive={devExhaustActive}
         />
         <InvitationCard
           t={t}

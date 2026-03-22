@@ -96,6 +96,9 @@ const RechargeCard = ({
   allSubscriptions = [],
   reloadSubscriptionSelf,
   queueInfo = null,
+  queueLoading = false,
+  isRootUser = false,
+  devExhaustActive,
 }) => {
   const onlineFormApiRef = useRef(null);
   const redeemFormApiRef = useRef(null);
@@ -141,6 +144,16 @@ const RechargeCard = ({
               </div>
 
               {/* 统计数据 */}
+              {queueLoading ? (
+                <div className='grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4'>
+                  {[0, 1, 2, 3].map((i) => (
+                    <div key={i} className='text-center'>
+                      <Skeleton.Title style={{ width: '80%', margin: '0 auto 6px' }} />
+                      <Skeleton.Paragraph rows={1} style={{ width: '60%', margin: '0 auto' }} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
               <div className='grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4'>
                 {/* 激活中额度 */}
                 <div className='text-center'>
@@ -285,6 +298,7 @@ const RechargeCard = ({
                     </div>
                   ))}
                 </div>
+              )}
               )}
             </div>
           </div>
@@ -650,6 +664,7 @@ const RechargeCard = ({
   );
 
   return (
+    <>
     <Card className='!rounded-2xl shadow-sm border-0'>
       {/* 卡片头部 */}
       <div className='flex items-center justify-between mb-4'>
@@ -718,6 +733,29 @@ const RechargeCard = ({
         topupContent
       )}
     </Card>
+    {isRootUser && (
+      <Card className='!rounded-xl w-full' style={{ border: '1px dashed #f0a020' }}>
+        <div className='flex items-center justify-between'>
+          <div>
+            <div style={{ fontWeight: 600, color: '#f0a020', fontSize: '13px' }}>
+              🛠 {t('开发者工具')}
+            </div>
+            <div style={{ color: 'var(--semi-color-text-2)', fontSize: '12px', marginTop: '2px' }}>
+              {t('仅超级管理员可见')}
+            </div>
+          </div>
+          <Button
+            theme='light'
+            type='warning'
+            size='small'
+            onClick={devExhaustActive}
+          >
+            {t('强制耗尽激活中额度')}
+          </Button>
+        </div>
+      </Card>
+    )}
+    </>
   );
 };
 

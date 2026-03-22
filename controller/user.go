@@ -1045,6 +1045,26 @@ func GetUserQuotaQueue(c *gin.Context) {
 	})
 }
 
+func DevExhaustActiveRecord(c *gin.Context) {
+	// Root-only: role >= 100
+	role := c.GetInt("role")
+	if role < 100 {
+		c.JSON(http.StatusForbidden, gin.H{"success": false, "message": "forbidden"})
+		return
+	}
+	userId := c.GetInt("id")
+	record, err := model.GetActiveRecord(userId)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	if err := model.MarkRecordUsedAndActivateNext(record); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
 type UpdateUserSettingRequest struct {
 	QuotaWarningType                 string  `json:"notify_type"`
 	QuotaWarningThreshold            float64 `json:"quota_warning_threshold"`
