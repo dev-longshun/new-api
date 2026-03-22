@@ -44,6 +44,7 @@ import {
   TrendingUp,
   Receipt,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 import { IconGift } from '@douyinfe/semi-icons';
 import { useMinimumLoadingTime } from '../../hooks/common/useMinimumLoadingTime';
@@ -94,6 +95,7 @@ const RechargeCard = ({
   activeSubscriptions = [],
   allSubscriptions = [],
   reloadSubscriptionSelf,
+  queueInfo = null,
 }) => {
   const onlineFormApiRef = useRef(null);
   const redeemFormApiRef = useRef(null);
@@ -139,15 +141,27 @@ const RechargeCard = ({
               </div>
 
               {/* 统计数据 */}
-              <div className='grid grid-cols-3 gap-6 mt-4'>
-                {/* 当前余额 */}
+              <div className='grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4'>
+                {/* 激活中额度 */}
                 <div className='text-center'>
                   <div
-                    className='text-base sm:text-2xl font-bold mb-2'
+                    className='text-base sm:text-2xl font-bold mb-1'
                     style={{ color: 'white' }}
                   >
-                    {renderQuota(userState?.user?.quota)}
+                    {queueInfo?.active_record
+                      ? renderQuota(queueInfo.active_record.quota - queueInfo.active_record.used_quota)
+                      : renderQuota(userState?.user?.quota)}
                   </div>
+                  {queueInfo?.active_record?.expired_time > 0 && (
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginBottom: '2px' }}>
+                      {(() => {
+                        const now = Math.floor(Date.now() / 1000);
+                        const diff = queueInfo.active_record.expired_time - now;
+                        const days = Math.ceil(diff / 86400);
+                        return days > 0 ? `${days}${t('天后到期')}` : t('即将到期');
+                      })()}
+                    </div>
+                  )}
                   <div className='flex items-center justify-center text-sm'>
                     <Wallet
                       size={14}
@@ -160,7 +174,39 @@ const RechargeCard = ({
                         fontSize: '12px',
                       }}
                     >
-                      {t('当前余额')}
+                      {t('激活中额度')}
+                    </Text>
+                  </div>
+                </div>
+
+                {/* 队列中额度 */}
+                <div className='text-center'>
+                  <div
+                    className='text-base sm:text-2xl font-bold mb-1'
+                    style={{ color: 'white' }}
+                  >
+                    {queueInfo?.pending_count > 0
+                      ? renderQuota(queueInfo.pending_quota || 0)
+                      : '-'}
+                  </div>
+                  {queueInfo?.pending_count > 0 && (
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginBottom: '2px' }}>
+                      {t('共')} {queueInfo.pending_count} {t('张')}
+                    </div>
+                  )}
+                  <div className='flex items-center justify-center text-sm'>
+                    <Clock
+                      size={14}
+                      className='mr-1'
+                      style={{ color: 'rgba(255,255,255,0.8)' }}
+                    />
+                    <Text
+                      style={{
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: '12px',
+                      }}
+                    >
+                      {t('队列中额度')}
                     </Text>
                   </div>
                 </div>

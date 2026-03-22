@@ -87,6 +87,9 @@ const TopUp = () => {
   // 账单Modal状态
   const [openHistory, setOpenHistory] = useState(false);
 
+  // 队列信息
+  const [queueInfo, setQueueInfo] = useState(null);
+
   // 订阅相关
   const [subscriptionPlans, setSubscriptionPlans] = useState([]);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
@@ -122,8 +125,9 @@ const TopUp = () => {
         let queueContent = t('成功兑换额度：') + renderQuota(data);
         try {
           const queueRes = await API.get('/api/user/quota/queue');
-          if (queueRes.data.success) {
+          if (queueRes.data?.success) {
             const q = queueRes.data.data;
+            setQueueInfo(q);
             if (q.pending_count > 0) {
               queueContent += `\n${t('队列中还有')} ${q.pending_count} ${t('张兑换码等待激活')}`;
             }
@@ -340,6 +344,15 @@ const TopUp = () => {
     }
   };
 
+  const fetchQueueInfo = async () => {
+    try {
+      const res = await API.get('/api/user/quota/queue');
+      if (res.data?.success) {
+        setQueueInfo(res.data.data);
+      }
+    } catch (_) {}
+  };
+
   const getSubscriptionPlans = async () => {
     setSubscriptionLoading(true);
     try {
@@ -549,6 +562,7 @@ const TopUp = () => {
   useEffect(() => {
     // 始终获取最新用户数据，确保余额等统计信息准确
     getUserQuota().then();
+    fetchQueueInfo().then();
     setTransferAmount(getQuotaPerUnit());
   }, []);
 
@@ -790,6 +804,7 @@ const TopUp = () => {
           activeSubscriptions={activeSubscriptions}
           allSubscriptions={allSubscriptions}
           reloadSubscriptionSelf={getSubscriptionSelf}
+          queueInfo={queueInfo}
         />
         <InvitationCard
           t={t}
