@@ -918,6 +918,9 @@ func decreaseUserQuota(id int, quota int) (err error) {
 	if err != nil {
 		return err
 	}
+	gopool.Go(func() {
+		IncrActiveRecordUsedQuota(id, quota)
+	})
 	return err
 }
 

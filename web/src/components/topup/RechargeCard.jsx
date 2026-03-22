@@ -261,6 +261,33 @@ const RechargeCard = ({
                   </div>
                 </div>
               </div>
+
+              {/* 队列明细 */}
+              {queueInfo?.pending_records?.length > 0 && (
+                <div
+                  className='mt-4 rounded-lg px-3 py-2'
+                  style={{ background: 'rgba(255,255,255,0.12)' }}
+                >
+                  <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px', marginBottom: '6px' }}>
+                    {t('队列明细')}
+                  </div>
+                  {queueInfo.pending_records.map((rec, idx) => (
+                    <div
+                      key={idx}
+                      className='flex items-center justify-between'
+                      style={{ color: 'rgba(255,255,255,0.9)', fontSize: '12px', padding: '2px 0' }}
+                    >
+                      <span style={{ color: 'rgba(255,255,255,0.5)', minWidth: '28px' }}>#{idx + 1}</span>
+                      <span className='flex-1'>{renderQuota(rec.quota)}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        {rec.quota_duration > 0
+                          ? `${t('激活后')} ${Math.round(rec.quota_duration / 86400)} ${t('天到期')}`
+                          : t('永不过期')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         }

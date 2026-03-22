@@ -79,6 +79,11 @@ func batchUpdate() {
 				err := increaseUserQuota(key, value)
 				if err != nil {
 					common.SysLog("failed to batch update user quota: " + err.Error())
+				} else if value < 0 {
+					userId, delta := key, -value
+					gopool.Go(func() {
+						IncrActiveRecordUsedQuota(userId, delta)
+					})
 				}
 			case BatchUpdateTypeTokenQuota:
 				err := increaseTokenQuota(key, value)

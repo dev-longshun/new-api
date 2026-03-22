@@ -149,28 +149,30 @@ func MarkRecordUsedAndActivateNext(record *RedemptionQuotaRecord) error {
 	})
 }
 
-// SyncActiveRecordUsedQuota updates used_quota on the active record based on current user quota.
-// Called asynchronously after quota deductions to keep used_quota roughly in sync.
-func SyncActiveRecordUsedQuota(userId int, currentUserQuota int) {
+// IncrActiveRecordUsedQuota increments used_quota on the active record by delta.
+// Called after a settled quota deduction. Safe for both batch and non-batch paths.
+func IncrActiveRecordUsedQuota(userId int, delta int) {
+	if delta <= 0 {
+		return
+	}
 	record, err := GetActiveRecord(userId)
 	if err != nil {
 		return
 	}
-	// used_quota = record.Quota - (currentUserQuota - quotaFromOtherSources)
-	// Simplified: used_quota = record.Quota - max(0, currentUserQuota)
-	// This is approximate; the expiry task uses it for "used up" detection.
-	usedQuota := record.Quota - currentUserQuota
-	if usedQuota < 0 {
-		usedQuota = 0
+	// Atomic increment, clamped to record.Quota
+	result := DB.Model(record).
+		Where("used_quota + ? <= quota", delta).
+		Update("used_quota", gorm.Expr("used_quota + ?", delta))
+	if result.Error != nil {
+		return
 	}
-	if usedQuota > record.Quota {
-		usedQuota = record.Quota
+	// Re-fetch to check if fully consumed
+	var updated RedemptionQuotaRecord
+	if err := DB.First(&updated, "id = ?", record.Id).Error; err != nil {
+		return
 	}
-	DB.Model(record).Update("used_quota", usedQuota)
-
-	// If fully used, activate next
-	if usedQuota >= record.Quota {
-		MarkRecordUsedAndActivateNext(record)
+	if updated.UsedQuota >= updated.Quota {
+		MarkRecordUsedAndActivateNext(&updated)
 	}
 }
 
