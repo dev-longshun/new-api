@@ -327,6 +327,8 @@ export const getChannelsColumns = ({
   setCurrentMultiKeyChannel,
   openUpstreamUpdateModal,
   detectChannelUpstreamUpdates,
+  onOpenUsageModal,
+  onOpenHealthModal,
 }) => {
   return [
     {
@@ -563,6 +565,21 @@ export const getChannelsColumns = ({
       },
     },
     {
+      key: COLUMN_KEYS.TODAY_USAGE,
+      title: t('今日消耗'),
+      dataIndex: 'today_used_quota',
+      render: (text, record, index) => {
+        if (record.children !== undefined) return null;
+        return (
+          <Tooltip content={t('今日已用额度')}>
+            <Tag color='blue' type='ghost' shape='circle'>
+              {renderQuota(record.today_used_quota || 0)}
+            </Tag>
+          </Tooltip>
+        );
+      },
+    },
+    {
       key: COLUMN_KEYS.PRIORITY,
       title: t('优先级'),
       dataIndex: 'priority',
@@ -713,6 +730,22 @@ export const getChannelsColumns = ({
                   content: t('复制渠道的所有信息'),
                   onOk: () => copySelectedChannel(record),
                 });
+              },
+            },
+            {
+              node: 'item',
+              name: t('每日用量'),
+              type: 'tertiary',
+              onClick: () => {
+                if (onOpenUsageModal) onOpenUsageModal(record);
+              },
+            },
+            {
+              node: 'item',
+              name: t('健康历史'),
+              type: 'tertiary',
+              onClick: () => {
+                if (onOpenHealthModal) onOpenHealthModal(record);
               },
             },
           ];

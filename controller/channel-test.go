@@ -847,6 +847,12 @@ func testAllChannels(notify bool) error {
 			}
 
 			channel.UpdateResponseTime(milliseconds)
+			// 记录健康日志
+			errMsg := ""
+			if newAPIError != nil {
+				errMsg = newAPIError.Error()
+			}
+			model.InsertChannelHealthLog(channel.Id, int(milliseconds), newAPIError == nil, errMsg)
 			time.Sleep(common.RequestInterval)
 		}
 

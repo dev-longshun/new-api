@@ -246,6 +246,9 @@ func SetApiRouter(router *gin.Engine) {
 			channelRoute.POST("/upstream_updates/apply_all", controller.ApplyAllChannelUpstreamModelUpdates)
 			channelRoute.POST("/upstream_updates/detect", controller.DetectChannelUpstreamModelUpdates)
 			channelRoute.POST("/upstream_updates/detect_all", controller.DetectAllChannelUpstreamModelUpdates)
+			channelRoute.GET("/today_usage", controller.GetChannelsTodayUsage)
+			channelRoute.GET("/:id/daily_usage", controller.GetChannelDailyUsage)
+			channelRoute.GET("/:id/health", controller.GetChannelHealthHistory)
 		}
 		tokenRoute := apiRouter.Group("/token")
 		tokenRoute.Use(middleware.UserAuth())

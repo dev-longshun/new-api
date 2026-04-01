@@ -3624,6 +3624,16 @@
     "默认折叠侧边栏": "Default collapse sidebar",
     "默认测试模型": "Default Test Model",
     "默认用户消息": "Default User Message",
-    "默认补全倍率": "Default completion ratio"
+    "默认补全倍率": "Default completion ratio",
+    "今日消耗": "Today's Usage",
+    "今日已用额度": "Today's used quota",
+    "每日用量": "Daily Usage",
+    "健康历史": "Health History",
+    "成功率": "Success Rate",
+    "Token 用量": "Token Usage",
+    "合计": "Total",
+    "错误信息": "Error Message",
+    "请求数": "Requests",
+    "请求": "requests"
   }
 }

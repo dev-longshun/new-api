@@ -99,6 +99,12 @@ func main() {
 	// 数据看板
 	go model.UpdateQuotaData()
 
+	// 渠道每日用量统计
+	go model.UpdateChannelDailyUsage()
+
+	// 渠道数据清理任务
+	model.StartChannelDataCleanupTask()
+
 	if os.Getenv("CHANNEL_UPDATE_FREQUENCY") != "" {
 		frequency, err := strconv.Atoi(os.Getenv("CHANNEL_UPDATE_FREQUENCY"))
 		if err != nil {
@@ -231,6 +237,10 @@ func main() {
 		common.SysLog("flushing quota data cache...")
 		model.SaveQuotaDataCache()
 	}
+
+	// Flush channel daily usage cache
+	common.SysLog("flushing channel daily usage cache...")
+	model.SaveChannelDailyUsageCache()
 
 	common.SysLog("graceful shutdown completed")
 }

@@ -197,6 +197,9 @@ func RecordConsumeLog(c *gin.Context, userId int, params RecordConsumeLogParams)
 			LogQuotaData(userId, username, params.ModelName, params.Quota, common.GetTimestamp(), params.PromptTokens+params.CompletionTokens)
 		})
 	}
+	gopool.Go(func() {
+		LogChannelDailyUsage(params.ChannelId, params.Quota, params.PromptTokens+params.CompletionTokens)
+	})
 }
 
 type RecordTaskBillingLogParams struct {

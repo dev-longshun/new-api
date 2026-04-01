@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Banner } from '@douyinfe/semi-ui';
 import { IconAlertTriangle } from '@douyinfe/semi-icons';
 import CardPro from '../../common/ui/CardPro';
@@ -34,11 +34,26 @@ import EditChannelModal from './modals/EditChannelModal';
 import EditTagModal from './modals/EditTagModal';
 import MultiKeyManageModal from './modals/MultiKeyManageModal';
 import ChannelUpstreamUpdateModal from './modals/ChannelUpstreamUpdateModal';
+import ChannelUsageModal from './modals/ChannelUsageModal';
+import ChannelHealthModal from './modals/ChannelHealthModal';
 import { createCardProPagination } from '../../../helpers/utils';
 
 const ChannelsPage = () => {
   const channelsData = useChannelsData();
   const isMobile = useIsMobile();
+
+  // Usage & Health modal states
+  const [usageModalChannel, setUsageModalChannel] = useState(null);
+  const [healthModalChannel, setHealthModalChannel] = useState(null);
+
+  const onOpenUsageModal = (record) => setUsageModalChannel(record);
+  const onOpenHealthModal = (record) => setHealthModalChannel(record);
+
+  const extendedChannelsData = {
+    ...channelsData,
+    onOpenUsageModal,
+    onOpenHealthModal,
+  };
 
   return (
     <>
@@ -72,6 +87,18 @@ const ChannelsPage = () => {
         confirmLoading={channelsData.upstreamApplyLoading}
         onConfirm={channelsData.applyUpstreamUpdates}
         onCancel={channelsData.closeUpstreamUpdateModal}
+      />
+      <ChannelUsageModal
+        visible={!!usageModalChannel}
+        channelId={usageModalChannel?.id}
+        channelName={usageModalChannel?.name}
+        onClose={() => setUsageModalChannel(null)}
+      />
+      <ChannelHealthModal
+        visible={!!healthModalChannel}
+        channelId={healthModalChannel?.id}
+        channelName={healthModalChannel?.name}
+        onClose={() => setHealthModalChannel(null)}
       />
 
       {/* Main Content */}
@@ -107,7 +134,7 @@ const ChannelsPage = () => {
         })}
         t={channelsData.t}
       >
-        <ChannelsTable {...channelsData} />
+        <ChannelsTable {...extendedChannelsData} />
       </CardPro>
     </>
   );

@@ -148,6 +148,9 @@ func GetAllChannels(c *gin.Context) {
 		clearChannelInfo(datum)
 	}
 
+	// 填充今日用量
+	fillTodayUsedQuota(channelData)
+
 	countQuery := model.DB.Model(&model.Channel{})
 	if statusFilter == common.ChannelStatusEnabled {
 		countQuery = countQuery.Where("status = ?", common.ChannelStatusEnabled)
@@ -345,6 +348,9 @@ func SearchChannels(c *gin.Context) {
 	for _, datum := range pagedData {
 		clearChannelInfo(datum)
 	}
+
+	// 填充今日用量
+	fillTodayUsedQuota(pagedData)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -1954,4 +1960,20 @@ func OllamaVersion(c *gin.Context) {
 			"version": version,
 		},
 	})
+}
+
+func fillTodayUsedQuota(channels []*model.Channel) {
+	if len(channels) == 0 {
+		return
+	}
+	ids := make([]int, 0, len(channels))
+	for _, ch := range channels {
+		ids = append(ids, ch.Id)
+	}
+	todayUsage := model.GetTodayUsageForChannels(ids)
+	for _, ch := range channels {
+		if q, ok := todayUsage[ch.Id]; ok {
+			ch.TodayUsedQuota = q
+		}
+	}
 }
