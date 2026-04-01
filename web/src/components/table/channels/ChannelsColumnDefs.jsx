@@ -17,14 +17,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Button,
   Dropdown,
   InputNumber,
   Modal,
+  Popover,
   Space,
   SplitButtonGroup,
+  Spin,
   Tag,
   Tooltip,
   Typography,
@@ -38,6 +40,7 @@ import {
   showSuccess,
   showError,
   showInfo,
+  API,
 } from '../../../helpers';
 import {
   CHANNEL_OPTIONS,
@@ -253,15 +256,70 @@ const renderResponseTime = (responseTime, t) => {
   }
 };
 
-const renderRelativeTime = (timestamp, t) => {
-  if (!timestamp || timestamp === 0) return null;
-  const now = Math.floor(Date.now() / 1000);
-  const diff = now - timestamp;
-  if (diff < 0) return null;
-  if (diff < 60) return t('刚刚');
-  if (diff < 3600) return Math.floor(diff / 60) + t('分钟前');
-  if (diff < 86400) return Math.floor(diff / 3600) + t('小时前');
-  return Math.floor(diff / 86400) + t('天前');
+const RecentUsagePopover = ({ channelId, children, t }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  const fetchData = async () => {
+    if (data !== null) return;
+    setLoading(true);
+    try {
+      const end = new Date();
+      const start = new Date();
+      start.setDate(start.getDate() - 2);
+      const fmt = (d) => d.toISOString().slice(0, 10);
+      const res = await API.get(
+        `/api/channel/${channelId}/daily_usage?start_date=${fmt(start)}&end_date=${fmt(end)}`
+      );
+      if (res.data.success) {
+        setData(res.data.data || []);
+      }
+    } catch (e) {
+      setData([]);
+    }
+    setLoading(false);
+  };
+
+  const content = (
+    <div style={{ minWidth: 180, padding: '4px 0' }}>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: 12 }}><Spin size='small' /></div>
+      ) : data && data.length > 0 ? (
+        <div>
+          <div style={{ fontSize: 12, color: 'var(--semi-color-text-2)', marginBottom: 6, fontWeight: 500 }}>
+            {t('最近 3 天消耗')}
+          </div>
+          {data.map((item) => (
+            <div key={item.date} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', fontSize: 13 }}>
+              <span style={{ color: 'var(--semi-color-text-2)' }}>{item.date}</span>
+              <span style={{ fontWeight: 500 }}>{renderQuota(item.quota_used || 0)}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--semi-color-text-2)', textAlign: 'center', padding: 8 }}>
+          {t('暂无数据')}
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <Popover
+      content={content}
+      trigger='hover'
+      position='bottom'
+      showArrow
+      visible={visible}
+      onVisibleChange={(v) => {
+        setVisible(v);
+        if (v) fetchData();
+      }}
+    >
+      {children}
+    </Popover>
+  );
 };
 
 const isRequestPassThroughEnabled = (record) => {
@@ -339,7 +397,6 @@ export const getChannelsColumns = ({
   openUpstreamUpdateModal,
   detectChannelUpstreamUpdates,
   onOpenUsageModal,
-  onOpenHealthModal,
 }) => {
   return [
     {
@@ -513,14 +570,13 @@ export const getChannelsColumns = ({
           let otherInfo = JSON.parse(record.other_info);
           let reason = otherInfo['status_reason'];
           let time = otherInfo['status_time'];
-          let tooltipContent = t('原因：') + reason + t('，时间：') + timestamp2string(time);
-          const relTime = renderRelativeTime(record.test_time, t);
-          if (relTime) {
-            tooltipContent += t('，最近测试：') + relTime;
-          }
           return (
             <div>
-              <Tooltip content={tooltipContent}>
+              <Tooltip
+                content={
+                  t('原因：') + reason + t('，时间：') + timestamp2string(time)
+                }
+              >
                 {renderStatus(text, record.channel_info, t)}
               </Tooltip>
             </div>
@@ -534,19 +590,7 @@ export const getChannelsColumns = ({
       key: COLUMN_KEYS.RESPONSE_TIME,
       title: t('响应时间'),
       dataIndex: 'response_time',
-      render: (text, record, index) => {
-        const relTime = renderRelativeTime(record.test_time, t);
-        return (
-          <div>
-            {renderResponseTime(text, t)}
-            {relTime && (
-              <div style={{ fontSize: 11, color: 'var(--semi-color-text-2)', marginTop: 2 }}>
-                {relTime}
-              </div>
-            )}
-          </div>
-        );
-      },
+      render: (text, record, index) => <div>{renderResponseTime(text, t)}</div>,
     },
     {
       key: COLUMN_KEYS.BALANCE,
@@ -557,11 +601,11 @@ export const getChannelsColumns = ({
           return (
             <div>
               <Space spacing={1}>
-                <Tooltip content={t('已用额度')}>
-                  <Tag color='white' type='ghost' shape='circle'>
+                <RecentUsagePopover channelId={record.id} t={t}>
+                  <Tag color='white' type='ghost' shape='circle' style={{ cursor: 'pointer' }}>
                     {renderQuota(record.used_quota)}
                   </Tag>
-                </Tooltip>
+                </RecentUsagePopover>
                 <Tooltip
                   content={t('剩余额度$') + record.balance + t('，点击更新')}
                 >
@@ -579,28 +623,13 @@ export const getChannelsColumns = ({
           );
         } else {
           return (
-            <Tooltip content={t('已用额度')}>
-              <Tag color='white' type='ghost' shape='circle'>
+            <RecentUsagePopover channelId={record.id} t={t}>
+              <Tag color='white' type='ghost' shape='circle' style={{ cursor: 'pointer' }}>
                 {renderQuota(record.used_quota)}
               </Tag>
-            </Tooltip>
+            </RecentUsagePopover>
           );
         }
-      },
-    },
-    {
-      key: COLUMN_KEYS.TODAY_USAGE,
-      title: t('今日消耗'),
-      dataIndex: 'today_used_quota',
-      render: (text, record, index) => {
-        if (record.children !== undefined) return null;
-        return (
-          <Tooltip content={t('今日已用额度')}>
-            <Tag color='blue' type='ghost' shape='circle'>
-              {renderQuota(record.today_used_quota || 0)}
-            </Tag>
-          </Tooltip>
-        );
       },
     },
     {
@@ -762,14 +791,6 @@ export const getChannelsColumns = ({
               type: 'tertiary',
               onClick: () => {
                 if (onOpenUsageModal) onOpenUsageModal(record);
-              },
-            },
-            {
-              node: 'item',
-              name: t('健康历史'),
-              type: 'tertiary',
-              onClick: () => {
-                if (onOpenHealthModal) onOpenHealthModal(record);
               },
             },
           ];

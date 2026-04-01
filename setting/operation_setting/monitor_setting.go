@@ -15,7 +15,7 @@ type MonitorSetting struct {
 // 默认配置
 var monitorSetting = MonitorSetting{
 	AutoTestChannelEnabled: false,
-	AutoTestChannelMinutes: 3,
+	AutoTestChannelMinutes: 10,
 }
 
 func init() {

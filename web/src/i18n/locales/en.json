@@ -3635,10 +3635,6 @@
     "错误信息": "Error Message",
     "请求数": "Requests",
     "请求": "requests",
-    "刚刚": "just now",
-    "分钟前": " min ago",
-    "小时前": " hr ago",
-    "天前": " days ago",
-    "，最近测试：": ", last test: "
+    "最近 3 天消耗": "Last 3 days usage"
   }
 }

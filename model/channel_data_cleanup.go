@@ -13,7 +13,6 @@ func StartChannelDataCleanupTask() {
 	go func() {
 		for {
 			time.Sleep(1 * time.Hour)
-			CleanupOldHealthLogs(7)
 			CleanupOldChannelDailyUsage(30)
 		}
 	}()

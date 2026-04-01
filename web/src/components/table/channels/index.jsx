@@ -35,24 +35,20 @@ import EditTagModal from './modals/EditTagModal';
 import MultiKeyManageModal from './modals/MultiKeyManageModal';
 import ChannelUpstreamUpdateModal from './modals/ChannelUpstreamUpdateModal';
 import ChannelUsageModal from './modals/ChannelUsageModal';
-import ChannelHealthModal from './modals/ChannelHealthModal';
 import { createCardProPagination } from '../../../helpers/utils';
 
 const ChannelsPage = () => {
   const channelsData = useChannelsData();
   const isMobile = useIsMobile();
 
-  // Usage & Health modal states
+  // Usage modal state
   const [usageModalChannel, setUsageModalChannel] = useState(null);
-  const [healthModalChannel, setHealthModalChannel] = useState(null);
 
   const onOpenUsageModal = (record) => setUsageModalChannel(record);
-  const onOpenHealthModal = (record) => setHealthModalChannel(record);
 
   const extendedChannelsData = {
     ...channelsData,
     onOpenUsageModal,
-    onOpenHealthModal,
   };
 
   return (
@@ -93,12 +89,6 @@ const ChannelsPage = () => {
         channelId={usageModalChannel?.id}
         channelName={usageModalChannel?.name}
         onClose={() => setUsageModalChannel(null)}
-      />
-      <ChannelHealthModal
-        visible={!!healthModalChannel}
-        channelId={healthModalChannel?.id}
-        channelName={healthModalChannel?.name}
-        onClose={() => setHealthModalChannel(null)}
       />
 
       {/* Main Content */}

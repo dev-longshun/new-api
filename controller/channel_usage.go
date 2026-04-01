@@ -49,23 +49,3 @@ func GetChannelDailyUsage(c *gin.Context) {
 		"data":    usages,
 	})
 }
-
-func GetChannelHealthHistory(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"success": false, "message": "无效的渠道ID"})
-		return
-	}
-	limitStr := c.DefaultQuery("limit", "50")
-	limit, _ := strconv.Atoi(limitStr)
-	logs, err := model.GetChannelHealthHistory(id, limit)
-	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    logs,
-	})
-}
