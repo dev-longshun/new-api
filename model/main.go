@@ -254,6 +254,10 @@ func migrateDB() error {
 	if err := migrateTokenModelLimitsToText(); err != nil {
 		return err
 	}
+	// Migrate channel models and model_mapping columns from varchar to text for existing tables
+	if err := migrateChannelModelsToText(); err != nil {
+		return err
+	}
 
 	err := DB.AutoMigrate(
 		&Channel{},
@@ -701,5 +705,64 @@ func PingDB() error {
 
 	lastPingTime = time.Now()
 	common.SysLog("Database pinged successfully")
+	return nil
+}
+
+// migrateChannelModelsToText migrates channel models and model_mapping columns from varchar to text
+// This is safe to run multiple times - it checks the column type first
+func migrateChannelModelsToText() error {
+	// SQLite uses type affinity, so TEXT and VARCHAR are effectively the same — no migration needed
+	if common.UsingSQLite {
+		return nil
+	}
+
+	tableName := "channels"
+	columnsToMigrate := []string{"models", "model_mapping"}
+
+	if !DB.Migrator().HasTable(tableName) {
+		return nil
+	}
+
+	for _, columnName := range columnsToMigrate {
+		if !DB.Migrator().HasColumn(&Channel{}, columnName) {
+			continue
+		}
+
+		var alterSQL string
+		if common.UsingPostgreSQL {
+			var dataType string
+			if err := DB.Raw(`SELECT data_type FROM information_schema.columns
+				WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?`,
+				tableName, columnName).Scan(&dataType).Error; err != nil {
+				common.SysLog(fmt.Sprintf("Warning: failed to query metadata for %s.%s: %v", tableName, columnName, err))
+				continue
+			}
+			if dataType == "text" {
+				continue
+			}
+			alterSQL = fmt.Sprintf(`ALTER TABLE %s ALTER COLUMN %s TYPE text`, tableName, columnName)
+		} else if common.UsingMySQL {
+			var columnType string
+			if err := DB.Raw(`SELECT COLUMN_TYPE FROM information_schema.columns
+					WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
+				tableName, columnName).Scan(&columnType).Error; err != nil {
+				common.SysLog(fmt.Sprintf("Warning: failed to query metadata for %s.%s: %v", tableName, columnName, err))
+				continue
+			}
+			if strings.ToLower(columnType) == "text" {
+				continue
+			}
+			alterSQL = fmt.Sprintf("ALTER TABLE %s MODIFY COLUMN %s text", tableName, columnName)
+		} else {
+			continue
+		}
+
+		if alterSQL != "" {
+			if err := DB.Exec(alterSQL).Error; err != nil {
+				return fmt.Errorf("failed to migrate %s.%s to text: %w", tableName, columnName, err)
+			}
+			common.SysLog(fmt.Sprintf("Successfully migrated %s.%s to text", tableName, columnName))
+		}
+	}
 	return nil
 }
