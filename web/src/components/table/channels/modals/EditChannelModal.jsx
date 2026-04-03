@@ -222,6 +222,8 @@ const EditChannelModal = (props) => {
   const [fullModels, setFullModels] = useState([]);
   const [modelGroups, setModelGroups] = useState([]);
   const [customModel, setCustomModel] = useState('');
+  const [batchModelText, setBatchModelText] = useState('');
+  const [batchModelErrors, setBatchModelErrors] = useState([]);
   const [modelSearchValue, setModelSearchValue] = useState('');
   const [modalImageUrl, setModalImageUrl] = useState('');
   const [isModalOpenurl, setIsModalOpenurl] = useState(false);
@@ -1912,6 +1914,71 @@ const EditChannelModal = (props) => {
     }
   };
 
+  const addBatchModels = () => {
+    if (batchModelText.trim() === '') {
+      showInfo(t('请输入模型名称'));
+      return;
+    }
+
+    const lines = batchModelText.split('\n');
+    const modelArray = lines
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    if (modelArray.length === 0) {
+      showInfo(t('请输入有效的模型名称'));
+      return;
+    }
+
+    let localModels = [...inputs.models];
+    let localModelOptions = [...modelOptions];
+    const addedModels = [];
+    const failedModels = [];
+
+    modelArray.forEach((model) => {
+      if (model && !localModels.includes(model)) {
+        localModels.push(model);
+        localModelOptions.push({
+          key: model,
+          label: model,
+          value: model,
+        });
+        addedModels.push(model);
+      } else if (localModels.includes(model)) {
+        // 模型已存在，不重复添加
+      } else {
+        failedModels.push(model);
+      }
+    });
+
+    setModelOptions(localModelOptions);
+    setBatchModelText('');
+    setBatchModelErrors(failedModels);
+    handleInputChange('models', localModels);
+
+    if (addedModels.length > 0) {
+      showSuccess(
+        t('已新增 {{count}} 个模型：{{list}}', {
+          count: addedModels.length,
+          list: addedModels.join(', '),
+        }),
+      );
+    }
+
+    if (failedModels.length > 0) {
+      showInfo(
+        t('以下模型已存在，已跳过：{{list}}', {
+          list: failedModels.join('、'),
+        }),
+      );
+    }
+  };
+
+  const clearBatchModelText = () => {
+    setBatchModelText('');
+    setBatchModelErrors([]);
+  };
+
   const batchAllowed = (!isEdit || isMultiKeyChannel) && inputs.type !== 57;
   const batchExtra = batchAllowed ? (
     <Space>
@@ -3267,6 +3334,47 @@ const EditChannelModal = (props) => {
                         </Button>
                       }
                     />
+
+                    {/* Batch Model Import Section */}
+                    <div className='mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200'>
+                      <div className='mb-3'>
+                        <Text className='text-sm font-medium'>
+                          {t('批量添加模型')}
+                        </Text>
+                        <div className='text-xs text-gray-500 mt-1'>
+                          {t('支持每行一个模型，空行自动忽略')}
+                        </div>
+                      </div>
+                      <textarea
+                        value={batchModelText}
+                        onChange={(e) => setBatchModelText(e.target.value)}
+                        placeholder={t('每行输入一个模型名称，支持批量粘贴\n例如：\nclaude-haiku-4-5\nclaude-opus-4-6-thinking\nglm-4.6')}
+                        className='w-full p-2 border border-gray-300 rounded text-sm font-mono resize-vertical'
+                        style={{ minHeight: '100px', maxHeight: '300px' }}
+                      />
+                      {batchModelErrors.length > 0 && (
+                        <div className='mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700'>
+                          {t('以下模型已存在，已跳过：')}
+                          <span className='font-medium'>{batchModelErrors.join('、')}</span>
+                        </div>
+                      )}
+                      <Space className='mt-3'>
+                        <Button
+                          size='small'
+                          type='primary'
+                          onClick={addBatchModels}
+                        >
+                          {t('批量添加')}
+                        </Button>
+                        <Button
+                          size='small'
+                          type='tertiary'
+                          onClick={clearBatchModelText}
+                        >
+                          {t('清空')}
+                        </Button>
+                      </Space>
+                    </div>
 
                     {MODEL_FETCHABLE_CHANNEL_TYPES.has(inputs.type) && (
                       <>
