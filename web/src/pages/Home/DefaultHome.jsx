@@ -1,99 +1,53 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getServerAddress } from '../../helpers/token';
-import Sidebar from './components/Sidebar';
-import IntroPage from './pages/IntroPage';
-import StartPage from './pages/StartPage';
-import ConfigPage from './pages/ConfigPage';
-import DowngradePage from './pages/DowngradePage';
-import VscodePage from './pages/VscodePage';
-import ErrorsPage from './pages/ErrorsPage';
-import ApiPage from './pages/ApiPage';
-import FaqPage from './pages/FaqPage';
-import CommandsPage from './pages/CommandsPage';
-
-const PAGES = {
-  intro: IntroPage,
-  start: StartPage,
-  config: ConfigPage,
-  downgrade: DowngradePage,
-  vscode: VscodePage,
-  errors: ErrorsPage,
-  api: ApiPage,
-  faq: FaqPage,
-  commands: CommandsPage,
-};
-
-const getHashPage = () => {
-  const hash = window.location.hash.replace('#', '');
-  return PAGES[hash] ? hash : 'intro';
-};
-
-const OFFICIAL_URL = 'https://rabbitcode.cc';
-
-const getDisplayAddress = () => {
-  const addr = getServerAddress();
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/.test(addr)) {
-    return OFFICIAL_URL;
-  }
-  return addr;
-};
+import React, { useEffect } from 'react';
+import './landing.css';
+import HeroSection from './sections/HeroSection';
+import StepsSection from './sections/StepsSection';
+import PerformanceSection from './sections/PerformanceSection';
+import PricingSection from './sections/PricingSection';
+import TrustSignals from './sections/TrustSignals';
 
 const DefaultHome = () => {
-  const [activePage, setActivePage] = useState(getHashPage);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const serverAddress = getDisplayAddress();
-
-  const navigate = useCallback((id) => {
-    setActivePage(id);
-    window.location.hash = id;
-  }, []);
-
   useEffect(() => {
-    const onHash = () => setActivePage(getHashPage());
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
+    // Find the scroll container (.semi-layout with overflow:auto)
+    // and apply smooth, natural scrolling behavior for the landing page.
+    const root = document.querySelector('.ld-root');
+    if (!root) return;
 
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') setSidebarOpen(false);
+    let scrollContainer = null;
+    let parent = root.parentElement;
+    while (parent) {
+      const style = getComputedStyle(parent);
+      const ov = style.overflow + style.overflowY;
+      if (ov.includes('auto') || ov.includes('scroll')) {
+        scrollContainer = parent;
+        break;
+      }
+      parent = parent.parentElement;
+    }
+
+    if (scrollContainer) {
+      // Enable smooth native scrolling
+      scrollContainer.style.scrollBehavior = 'smooth';
+      scrollContainer.style.WebkitOverflowScrolling = 'touch';
+      // Scroll to top on mount
+      scrollContainer.scrollTop = 0;
+    }
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.style.scrollBehavior = '';
+      }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
   }, []);
-
-  const PageComponent = PAGES[activePage] || IntroPage;
 
   return (
-    <>
-      <div className="hp-scene" aria-hidden="true" />
-      <div className="hp-layout">
-        <Sidebar
-          activePage={activePage}
-          onNavigate={navigate}
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-        />
-        <button
-          className={`hp-mobile-menu${sidebarOpen ? ' open' : ''}`}
-          onClick={() => setSidebarOpen((v) => !v)}
-          type="button"
-          aria-label="Menu"
-        >
-          <span className="hp-menu-toggle-icon" aria-hidden="true" />
-        </button>
-        <main className="hp-main">
-          <div className="hp-main-inner">
-            <PageComponent key={activePage} serverAddress={serverAddress} />
-          </div>
-        </main>
-      </div>
-      <div
-        className={`hp-overlay${sidebarOpen ? ' active' : ''}`}
-        onClick={() => setSidebarOpen(false)}
-        aria-hidden="true"
-      />
-    </>
+    <div className='ld-root'>
+      <HeroSection />
+      <StepsSection />
+      <PerformanceSection />
+      <PricingSection />
+      <TrustSignals />
+    </div>
   );
 };
 

@@ -120,7 +120,7 @@ echo "[3/4] 启动基础设施（postgres + redis）"
 # 停掉旧的本地进程和可能占 3000 端口的 Docker 容器
 pkill -f new-api-dev 2>/dev/null || true
 docker stop new-api 2>/dev/null || true
-docker compose -f docker-compose.dev.yml up -d --remove-orphans
+docker compose -f docker-compose.dev.yml up -d --remove-orphans --force-recreate
 if [ $? -ne 0 ]; then
   echo "Docker 启动失败，请检查 Docker Desktop 状态。"
   read -p "按回车键退出..."
@@ -129,7 +129,7 @@ fi
 
 # 等待 postgres 就绪
 for i in {1..30}; do
-  if docker exec postgres pg_isready -U root >/dev/null 2>&1; then
+  if docker exec postgres pg_isready -U postgres >/dev/null 2>&1; then
     break
   fi
   sleep 1
@@ -137,7 +137,7 @@ done
 
 echo "[4/4] 启动 new-api 本地服务"
 
-export SQL_DSN="postgresql://root:123456@127.0.0.1:5432/new-api"
+export SQL_DSN="postgresql://postgres:123456@127.0.0.1:5433/new-api?sslmode=disable"
 export REDIS_CONN_STRING="redis://127.0.0.1"
 export TZ="Asia/Shanghai"
 export ERROR_LOG_ENABLED="true"
